@@ -1,151 +1,104 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[9]:
+
+
 import requests
-import pandas
-import json
-import argparse
-import logging
+import pandas as pd
 
 
-def parse_args():
-        parser = argparse.ArgumentParser(description='Download gnomad data and convert to .tsv format.')
-        parser.add_argument('-o', '--output', type=argparse.FileType('w'),
-                            help='Ouput TSV file result.')
-        parser.add_argument('-l', '--logfile', default='/tmp/download_gnomad_data.log')
-        parser.add_argument('-v', '--verbose', action='count', default=False, help='determines logging')
-        options = parser.parse_args()
-        return options
+# In[10]:
 
 
-def main():
-    options = parse_args()
-    output = options.output
-    logfile = options.logfile
+# type the gene's name in the gene_id_list here!!
+gene_id_list = [
+    "OR52M1", "OR55", "OR52N4", "OR11H1", "OR4K15", "OR6S1", "OR5AP2",
+    "OR5H1", "OR13C1", "OR2K2", "OR8G5", "OR1L3", "OR2T27"
+]
+saved_list = []
 
-    if options.verbose:
-        logging_level = logging.DEBUG
-    else:
-        logging_level = logging.CRITICAL
-
-    logging.basicConfig(filename=logfile, filemode="w", level=logging_level)
-
-    variants_brca1 = generate_data("BRCA1", "ENST00000357654")
-    variants_brca2 = generate_data("BRCA2", "ENST00000544455")
-
-    variants = variants_brca1 + variants_brca2
-
-    normalized_variants_df = normalize_variants(variants)
-
-    # normalized_variants_df.to_csv(output, sep='\t', index=False, na_rep='-')
-    normalized_variants_df.to_csv('output.csv')
+def fetch(jsondata, url="https://gnomad.broadinstitute.org/api"):
+    # The server gives a generic error message if the content type isn't
+    # explicitly set
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, json=jsondata, headers=headers)
+    json = response.json()
+    if "errors" in json:
+        raise Exception(json["errors"])
+    return json
 
 
-def flatten(variant, field, genome_or_exome):
-    for f in field:
-        if f not in ['populations', 'filters']:
-            variant[genome_or_exome + '_' + f] = field[f]
-    populations = field['populations']
-    for population in populations:
-        name = population['id']
-        keys = population.keys()
-        for key in keys:
-            if name != key:
-                variant[genome_or_exome + '_' + name + '_' + key] = population[key]
-    return variant
-
-
-def flatten_populations(variants):
-    for variant in variants:
-        genome = variant['genome']
-        exome = variant['exome']
-        if genome:
-            variant = flatten(variant, genome, 'genome')
-        if exome:
-            variant = flatten(variant, exome, 'exome')
-        del variant['genome']
-        del variant['exome']
-    return variants
-
-
-def normalize_variants(variants):
-    variants_with_flattened_populations = flatten_populations(variants)
-    variants_df = pandas.DataFrame.from_dict(variants_with_flattened_populations)
-    variants_df['flags'] = variants_df['flags'].apply(', '.join)
-    return variants_df
-
-
-def build_query(gene, transcript):
-    return """{
+def get_variant_list(gene_id, dataset="gnomad_r2_1"):
+    # Note that this is GraphQL, not JSON.
+    fmt_graphql = """
+    {
         gene(gene_name: "%s") {
-            _id
-            omim_description
-            gene_id
-            omim_accession
-            chrom
-            strand
-            full_gene_name
-            gene_name_upper
-            other_names
-            canonical_transcript
-            start
-            stop
-            xstop
-            xstart
-            gene_name
-            variants(dataset: gnomad_r2_1_non_cancer, transcriptId: "%s") {
-                alt
-                chrom
-                pos
-                ref
-                variantId
-                xpos
-                genome {
-                    ac
-                    ac_hemi
-                    ac_hom
-                    an
-                    af
-                    filters
-                    populations {
-                      id
-                      ac
-                      an
-                      ac_hemi
-                      ac_hom
-                    }
-                }
-                exome {
-                    ac
-                    ac_hemi
-                    ac_hom
-                    an
-                    af
-                    filters
-                    populations {
-                        id
-                        ac
-                        an
-                        ac_hemi
-                        ac_hom
-                    }
-                }
-                consequence
-                consequence_in_canonical_transcript
-                flags
-                hgvs
-                hgvsc
-                hgvsp
-                rsid
-            }
+          variants(dataset: %s) {
+            consequence
+            pos
+            rsid
+            variant_id: variantId
+          }
         }
-    }""" % (gene, transcript)
+      }
+    """
+    # This part will be JSON encoded, but with the GraphQL part left as a
+    # glob of text.
+    req_variantlist = {
+        "query": fmt_graphql % (gene_id, dataset),
+        "variables": {}
+    }
+    response = fetch(req_variantlist)
+    return response["data"]["gene"]["variants"]
+
+# add the gene_id at the last column! 
+def make_df(gene_id):
+    li = get_variant_list(gene_id)
+    df = pd.DataFrame(li)
+    df['SYMBOL'] = gene_id
+    return df
 
 
-def generate_data(gene, transcript):
-    query = build_query(gene, transcript)
-    headers = { "content-type": "application/graphql" }
-    response = requests.post('https://gnomad.broadinstitute.org/api', data=query, headers=headers)
-    parsed_json = json.loads(response.text)
-    return parsed_json['data']['gene']['variants']
+def make_csv(df, gene_id):
+    df.to_csv(gene_id + '.csv')
+
+# generate and download csv file of each gene, saved to current path
+def generate_csv(gene_id_list):
+    for gene_id in gene_id_list:
+        try:
+            foo = get_variant_list(gene_id)
+            gene_df = make_df(gene_id)
+            make_csv(gene_df, gene_id)
+            saved_list.append(gene_id)
+            print('\x1b[6;30;42m' + 'saved: ' + gene_id + '\x1b[0m')
+        except:
+            print('\x1b[6;30;41m' + 'error: ' + gene_id + '\x1b[0m')
+            pass
+
+# download the combined csv file to current path, named as "output.csv"
+def combine_csv():
+    generate_csv(gene_id_list)
+    combined_csv = pd.read_csv(saved_list[0] + '.csv')
+    combined_csv.to_csv('output.csv', encoding="utf_8_sig", index=False)
+    for gene_id in saved_list:
+        combined_csv = pd.read_csv(gene_id + '.csv')
+        combined_csv.to_csv('output.csv',
+                            encoding="utf_8_sig",
+                            index=False,
+                            header=False,
+                            mode='a+')
+    print('combined file: \x1b[6;30;42m output.csv \x1b[6;30;41m')
 
 
-if __name__ == "__main__":
-    main()
+# In[11]:
+
+
+combine_csv()
+
+
+# In[ ]:
+
+
+
+
