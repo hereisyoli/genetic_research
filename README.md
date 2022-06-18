@@ -1,7 +1,8 @@
 # Retrieve exome and genome sequencing data from gnomAD
 
-![image](https://user-images.githubusercontent.com/47645487/174421102-9004ab06-4616-480a-bcfe-b239739efac3.png)
-•	Pre-processed data based on genetic properties from online gene variation database in Python
-•	Collected, interpreted, and visualized data for experimental uses, scientific research, and further data analysis
-•	Utilized gnomAD to retrieve exome and genome sequencing data from large-scale sequencing projects
-![image](https://user-images.githubusercontent.com/47645487/174421124-86f85209-23e0-4e4d-925e-02df4f71c652.png)
+## Fetch data using API of gnomAD to retrieve exome and genome sequencing data from large-scale sequencing projects
+-> enter and type the gene's name in the gene_id_list
+-> run python file
+-> output print out and save as CSV file locally
+
+![image](https://user-images.githubusercontent.com/47645487/174424747-8b2fdcb7-ead7-4953-909a-412aa4161a07.png)
