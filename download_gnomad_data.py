@@ -1,16 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
-
 
 import requests
 import pandas as pd
 import numpy as np
-
-
-# In[14]:
-
 
 # type the gene's name in the gene_id_list here!!
 gene_id_list = [
@@ -161,19 +155,7 @@ def combine_csv():
     
 #Please double check gene_name,
 #then try enter the error gene_name in "https://gnomad.broadinstitute.org/"to check existence   
-    
-    
-    
-
-
-# In[15]:
 
 
 combine_csv()
-
-
-# In[ ]:
-
-
-
 
