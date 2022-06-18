@@ -2,7 +2,10 @@
 
 in UB Gokcumen Lab
 
-#### The regular procesure for access online database and obtain teh variation data of particular genes
+* [purpose](https://github.com/hereisyoli/genetic_research/blob/master/Fatih_gnomAD.pdf)
+
+## The regular procesure 
+### for access online database and obtain teh variation data of particular genes
 
 ![image](https://user-images.githubusercontent.com/47645487/174427964-d53e9dfb-99e3-4666-b07a-8d801ef921f8.png)
 
@@ -12,9 +15,8 @@ in UB Gokcumen Lab
 which is complex and will be too much red tape involved.
 
 
-Throughout the script, we can easily
-
-#### Fetch data using API of gnomAD to retrieve exome and genome sequencing data from large-scale sequencing projects
+## Throughout the script, we can easily
+### Fetch data using API of gnomAD to retrieve exome and genome sequencing data from large-scale sequencing projects
 - enter and type the gene's name in the gene_id_list
 - run python file
 - output print out and save as CSV file locally
