@@ -5,7 +5,7 @@ in UB Gokcumen Lab
 * [purpose](https://github.com/hereisyoli/genetic_research/blob/master/Fatih_gnomAD.pdf)
 
 ## The regular procesure 
-### for access online database and obtain teh variation data of particular genes
+### access online database and obtain the variation data of particular genes
 
 ![image](https://user-images.githubusercontent.com/47645487/174427964-d53e9dfb-99e3-4666-b07a-8d801ef921f8.png)
 
